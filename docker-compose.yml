@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  flamingo-api:
+    build: .
+    image: flamingo-radiology-api:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+      - ./data/few_shot_examples:/app/data/few_shot_examples
+      - huggingface_cache:/app/.cache/huggingface
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - HF_HOME=/app/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  huggingface_cache:
